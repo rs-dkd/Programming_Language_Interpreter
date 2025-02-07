@@ -40,3 +40,7 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+.idea/discord.xml
+.idea/gradle.xml
+.idea/material_theme_project_new.xml
+.idea/misc.xml
