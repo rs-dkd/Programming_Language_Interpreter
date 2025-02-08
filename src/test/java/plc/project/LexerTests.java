@@ -22,8 +22,15 @@ public class LexerTests {
         return Stream.of(
                 Arguments.of("Alphabetic", "getName", true),
                 Arguments.of("Alphanumeric", "thelegend27", true),
+                Arguments.of("Leading Underscore", "_name", true),
+                Arguments.of("Trailing Underscore", "name_", true),
+                Arguments.of("Underscore in Middle", "the_name", true),
+
                 Arguments.of("Leading Hyphen", "-five", false),
-                Arguments.of("Leading Digit", "1fish2fish3fishbluefish", false)
+                Arguments.of("Leading Digit", "1fish2fish3fishbluefish", false),
+                Arguments.of("Space", "a space", false),
+                Arguments.of("Tab", "a\ttab", false),
+                Arguments.of("Newline", "a\nnewline", false)
         );
     }
 
@@ -37,8 +44,16 @@ public class LexerTests {
         return Stream.of(
                 Arguments.of("Single Digit", "1", true),
                 Arguments.of("Multiple Digits", "12345", true),
-                Arguments.of("Negative", "-1", true),
-                Arguments.of("Leading Zero", "01", false)
+                Arguments.of("Trailing Zero", "10", true),
+                Arguments.of("Negative Multiple Digits", "-12345", true),
+                Arguments.of("Huge Number", "123456789012345678901234567890", true),
+
+
+                Arguments.of("Leading Zero", "01", false),
+                Arguments.of("Negative Leading Zero", "-01", false),
+                Arguments.of("Multiple Leading Zeros", "0001", false),
+                Arguments.of("Decimal", "1.2", false),
+                Arguments.of("Negative Decimal", "-1.2", false)
         );
     }
 
