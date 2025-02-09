@@ -47,12 +47,20 @@ public class LexerTests {
                 Arguments.of("Trailing Zero", "10", true),
                 Arguments.of("Negative Multiple Digits", "-12345", true),
                 Arguments.of("Huge Number", "123456789012345678901234567890", true),
+                Arguments.of("Positive Non-Zero Integer", "+1", true),
+                Arguments.of("Just Zero" , "0", true),
 
                 Arguments.of("Leading Zero", "01", false),
                 Arguments.of("Negative Leading Zero", "-01", false),
                 Arguments.of("Multiple Leading Zeros", "0001", false),
                 Arguments.of("Decimal", "1.2", false),
-                Arguments.of("Negative Decimal", "-1.2", false)
+                Arguments.of("Negative Decimal", "-1.2", false),
+                Arguments.of("Positive Decimal", "+1.2", false),
+                Arguments.of("Positive Zero", "+0", false),
+                Arguments.of("Negative Zero", "-0", false),
+                Arguments.of("Double Plus Signs", "++1", false),
+                Arguments.of("Double Minus Signs", "--1", false),
+                Arguments.of("Space Between Integers", "1 2", false)
         );
     }
 
@@ -66,7 +74,7 @@ public class LexerTests {
         return Stream.of(
                 Arguments.of("Multiple Digits", "123.456", true),
                 Arguments.of("Negative Decimal", "-1.0", true),
-                Arguments.of("Positive Decimal", "1.0", true),
+                Arguments.of("Positive Decimal", "+1.0", true),
                 Arguments.of("Long Decimal", "123456789012345678901234567890.123456789012345678901234567890", true),
                 Arguments.of("Zero Decimal", "0.0", true),
 
@@ -74,7 +82,10 @@ public class LexerTests {
                 Arguments.of("Leading Decimal", ".5", false),
                 Arguments.of("Negative Leading Decimal", "-.5", false),
                 Arguments.of("Negative Trailing Decimal", "-5.", false),
-                Arguments.of("No Decimal", "1", false)
+                Arguments.of("No Decimal", "1", false),
+                Arguments.of("Double Decimal", "1..0", false),
+                Arguments.of("Decimal With No Digits", ".", false),
+                Arguments.of("Multiple Decimals", "1.2.3", false)
         );
     }
 
@@ -91,12 +102,14 @@ public class LexerTests {
                 Arguments.of("Tab Escape", "\'\\t\'", true),
                 Arguments.of("Backslash Escape", "\'\\\\\'", true),
                 Arguments.of("Quote Escape", "\'\\\'\'", true),
+                Arguments.of("Space Character", "\' \'", true),
 
                 Arguments.of("Empty", "\'\'", false),
                 Arguments.of("Multiple", "\'abc\'", false),
                 Arguments.of("Unterminated", "\'a", false),
                 Arguments.of("Invalid Escape", "\'\\a\'", false),
-                Arguments.of("No Quotes", "a", false)
+                Arguments.of("No Quotes", "a", false),
+                Arguments.of("Unicode Escape", "\'\\u1234\'", false)
         );
     }
 
@@ -113,12 +126,14 @@ public class LexerTests {
                 Arguments.of("Newline", "\"\\n\"", true),
                 Arguments.of("Backslash Escape", "\"Hello,\\\\World\"", true),
                 Arguments.of("Long String", "\"123456789012345678901234567890123456789012345678901234567890\"", true),
+                Arguments.of("Multiple Escapes", "\"\\t\\n\\\"\"", true),
 
                 Arguments.of("Unterminated", "\"unterminated", false),
                 Arguments.of("Invalid Escape", "\"invalid\\escape\"", false),
                 Arguments.of("No Quotes", "nooooo", false),
                 Arguments.of("Single Quote", "''", false),
-                Arguments.of("Ending with Single Quote", "\"\\\"'", false)
+                Arguments.of("Ending with Single Quote", "\"\\\"'", false),
+                Arguments.of("Newline Unterminated", "\"unterminated\n\"", false)
         );
     }
 
@@ -141,7 +156,8 @@ public class LexerTests {
                 Arguments.of("Tab", "\t", false),
                 Arguments.of("New Line", "\n", false),
                 Arguments.of("Alphanumeric", "a1", false),
-                Arguments.of("Space in between", "! =", false)
+                Arguments.of("Space in between", "! =", false),
+                Arguments.of("Multiple Operators", "+-/" , false)
         );
     }
 

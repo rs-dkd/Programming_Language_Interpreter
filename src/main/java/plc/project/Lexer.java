@@ -77,7 +77,10 @@ public final class Lexer {
 
     public Token lexNumber() {
         boolean isDecimal = false;
+        boolean hasSign = false;
+
         if(peek("[+-]")){
+            hasSign = true;
             match("[+-]");
         }
         if(peek("0")){
@@ -91,6 +94,9 @@ public final class Lexer {
                 while(peek("[0-9]")){
                     match("[0-9]");
                 }
+            }
+            else if(hasSign){
+                throw new ParseException("Sign Before Zero", chars.index);
             }
         }
         else if(peek("[1-9]")){
@@ -131,6 +137,8 @@ public final class Lexer {
         while (chars.has(0) && !peek("\"")) {
             if (peek("\\\\")) {
                 lexEscape();
+            }else if(peek("\n")){
+                throw new ParseException("Unterminated String", chars.index);
             } else {
                 match(".");
             }
