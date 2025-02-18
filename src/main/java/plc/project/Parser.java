@@ -1,6 +1,8 @@
 package plc.project;
 
 import java.util.List;
+import java.util.ArrayList;
+import java.util.Optional;
 
 /**
  * The parser takes the sequence of tokens emitted by the lexer and turns that
@@ -52,7 +54,16 @@ public final class Parser {
      * statement, then it is an expression/assignment statement.
      */
     public Ast.Stmt parseStatement() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        Ast.Expr leftSide = parseExpression();
+        if(match("=")){
+            Ast.Expr rightSide = parseExpression();
+            if(match(";")){
+                return new Ast.Stmt.Assignment(leftSide, rightSide);
+            }
+        }else if(match(";")){
+                return new Ast.Stmt.Expression(leftSide);
+        }
+        throw new ParseException("Invalid Expression Case", tokens.get(0).getIndex());
     }
 
     /**
@@ -104,42 +115,86 @@ public final class Parser {
      * Parses the {@code expression} rule.
      */
     public Ast.Expr parseExpression() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        return parseLogicalExpression();
     }
 
     /**
      * Parses the {@code logical-expression} rule.
      */
     public Ast.Expr parseLogicalExpression() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        Ast.Expr leftSide = parseEqualityExpression();
+        while(match("AND") || match("OR")){
+            String operator = tokens.get(0).getLiteral();
+            Ast.Expr rightSide = parseEqualityExpression();
+            leftSide = new Ast.Expr.Binary(operator, leftSide, rightSide);
+        }
+        return leftSide;
     }
 
     /**
      * Parses the {@code equality-expression} rule.
      */
     public Ast.Expr parseEqualityExpression() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        Ast.Expr leftSide = parseAdditiveExpression();
+        while(match("<") || match(">") || match("<=") || match(">=") || match("==") || match("!=")){
+            String operator = tokens.get(0).getLiteral();
+            Ast.Expr rightSide = parseAdditiveExpression();
+            leftSide = new Ast.Expr.Binary(operator, leftSide, rightSide);
+        }
+        return leftSide;
     }
 
     /**
      * Parses the {@code additive-expression} rule.
      */
     public Ast.Expr parseAdditiveExpression() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        Ast.Expr leftSide = parseMultiplicativeExpression();
+        while(match("+") || match("-")){
+            String operator = tokens.get(0).getLiteral();
+            Ast.Expr rightSide = parseMultiplicativeExpression();
+            leftSide = new Ast.Expr.Binary(operator, leftSide, rightSide);
+        }
+        return leftSide;
     }
 
     /**
      * Parses the {@code multiplicative-expression} rule.
      */
     public Ast.Expr parseMultiplicativeExpression() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        Ast.Expr leftSide = parseSecondaryExpression();
+        while(match("*") || match("/")){
+            String operator = tokens.get(0).getLiteral();
+            Ast.Expr rightSide = parseSecondaryExpression();
+            leftSide = new Ast.Expr.Binary(operator, leftSide, rightSide);
+        }
+        return leftSide;
     }
 
     /**
      * Parses the {@code secondary-expression} rule.
      */
     public Ast.Expr parseSecondaryExpression() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        Ast.Expr leftSide = parsePrimaryExpression();
+        while(match(".")){
+            if(!match(Token.Type.IDENTIFIER)){
+                throw new ParseException("Invalid Primary Expr", tokens.get(0).getIndex());
+            }
+            String id = tokens.get(0).getLiteral();
+            if(match("(")){
+                List<Ast.Expr> args = new ArrayList<>();
+                if(!match(")")){
+                    args.add(parseExpression());
+                    if(match(",")){
+                        args.add(parseExpression());
+                    }
+                    throw new ParseException("No End Parenthesis", tokens.get(0).getIndex());
+                }
+                leftSide = new Ast.Expr.Function(Optional.of(leftSide), id, args);
+            }else{
+                leftSide = new Ast.Expr.Access(Optional.of(leftSide), id);
+            }
+        }
+        return leftSide;
     }
 
     /**
@@ -163,7 +218,22 @@ public final class Parser {
      * {@code peek(Token.Type.IDENTIFIER)} and {@code peek("literal")}.
      */
     private boolean peek(Object... patterns) {
-        throw new UnsupportedOperationException(); //TODO (in lecture)
+        for(int i = 0; i < patterns.length; i++){
+            if(!tokens.has(1)){
+                return false;
+            }else if(patterns[i] instanceof Token.Type){
+                if(patterns[i] != tokens.get(i).getType()){
+                    return false;
+                }
+            }else if(patterns[i] instanceof String){
+                if(!patterns[i].equals(tokens.get(i).getLiteral())){
+                    return false;
+                }
+            }else{
+                throw new AssertionError("Invalid pattern object: " + patterns[i].getClass());
+            }
+        }
+        return true;
     }
 
     /**
@@ -171,7 +241,13 @@ public final class Parser {
      * and advances the token stream.
      */
     private boolean match(Object... patterns) {
-        throw new UnsupportedOperationException(); //TODO (in lecture)
+        boolean peek = peek(patterns);
+        if(peek){
+            for(int i = 0; i < patterns.length; i++){
+                tokens.advance();
+            }
+        }
+        return peek;
     }
 
     private static final class TokenStream {
