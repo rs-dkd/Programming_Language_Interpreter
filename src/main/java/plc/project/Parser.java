@@ -2,9 +2,8 @@ package plc.project;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Stream;
 
 /**
  * The parser takes the sequence of tokens emitted by the lexer and turns that
@@ -125,10 +124,9 @@ public final class Parser {
      */
     public Ast.Expression parseLogicalExpression() throws ParseException {
         Ast.Expression leftSide = parseEqualityExpression();
-        while(peek("AND") || peek("OR")){
+        while(peekAny("&&", "||")){
             String operator = tokens.get(0).getLiteral();
-            match("AND");
-            match("OR");
+            consume(operator, "&&", "||");
             Ast.Expression rightSide = parseEqualityExpression();
             leftSide = new Ast.Expression.Binary(operator, leftSide, rightSide);
         }
@@ -140,14 +138,9 @@ public final class Parser {
      */
     public Ast.Expression parseEqualityExpression() throws ParseException {
         Ast.Expression leftSide = parseAdditiveExpression();
-        while(peek("<") || peek(">") || peek("<=") || peek(">=") || peek("==") || peek("!=")){
+        while (peekAny("<", ">", "<=", ">=", "==", "!=")) {
             String operator = tokens.get(0).getLiteral();
-            match("<");
-            match(">");
-            match("<=");
-            match(">=");
-            match("==");
-            match("!=");
+            consume(operator, "<", ">", "<=", ">=", "==", "!=");
             Ast.Expression rightSide = parseAdditiveExpression();
             leftSide = new Ast.Expression.Binary(operator, leftSide, rightSide);
         }
@@ -159,10 +152,9 @@ public final class Parser {
      */
     public Ast.Expression parseAdditiveExpression() throws ParseException {
         Ast.Expression leftSide = parseMultiplicativeExpression();
-        while(peek("+") || peek("-")){
+        while (peekAny("+", "-")) {
             String operator = tokens.get(0).getLiteral();
-            match("+");
-            match("-");
+            consume(operator, "+", "-");
             Ast.Expression rightSide = parseMultiplicativeExpression();
             leftSide = new Ast.Expression.Binary(operator, leftSide, rightSide);
         }
@@ -174,10 +166,9 @@ public final class Parser {
      */
     public Ast.Expression parseMultiplicativeExpression() throws ParseException {
         Ast.Expression leftSide = parseSecondaryExpression();
-        while(peek("*") || peek("/")){
+        while (peekAny("*", "/")) {
             String operator = tokens.get(0).getLiteral();
-            match("*");
-            match("/");
+            consume(operator, "*", "/");
             Ast.Expression rightSide = parseSecondaryExpression();
             leftSide = new Ast.Expression.Binary(operator, leftSide, rightSide);
         }
@@ -237,7 +228,9 @@ public final class Parser {
         if (match("NIL")) return new Ast.Expression.Literal(null);
 
         if (peek(Token.Type.STRING)) {
-            String value = tokens.get(0).getLiteral().replace("\"", "").replace("\\n", "\n");
+            String value = tokens.get(0).getLiteral()
+                    .replace("\"", "")
+                    .replace("\\n", "\n");
             match(Token.Type.STRING);
             return new Ast.Expression.Literal(value);
         }
@@ -317,18 +310,37 @@ public final class Parser {
         return true;
     }
 
+    private boolean peekAny(Object...patterns) {
+        for (int i = 0; i < patterns.length; i++) {
+            if (peek(patterns[i])) return true;
+        }
+        return false;
+    }
+
     /**
      * As in the lexer, returns {@code true} if {@link #peek(Object...)} is true
      * and advances the token stream.
      */
     private boolean match(Object... patterns) {
-        boolean peek = peek(patterns);
+        boolean peek = peekAny(patterns);
         if(peek){
             for(int i = 0; i < patterns.length; i++){
                 tokens.advance();
             }
         }
         return peek;
+    }
+
+    private void consume(String tokenLiteral, Object... patterns) {
+        Object[] filteredPatterns = Arrays
+                .stream(patterns)
+                .filter(pattern -> pattern instanceof String && tokenLiteral == pattern)
+                .toArray();
+        if (peekAny(filteredPatterns)) {
+            match(filteredPatterns);
+        } else {
+            throw new ParseException("Expected " + tokenLiteral, tokens.get(0).getIndex());
+        }
     }
 
     private static final class TokenStream {
