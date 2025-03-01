@@ -58,13 +58,14 @@ public final class Parser {
         Ast.Expression leftSide = parseExpression();
         if(match("=")){
             Ast.Expression rightSide = parseExpression();
-            if(match(";")){
-                return new Ast.Statement.Assignment(leftSide, rightSide);
+            if(!match(";")){
+                throw new ParseException("Missing semicolon after assignment.", tokens.has(0) ? tokens.get(0).getIndex() : -1);
             }
+            return new Ast.Statement.Assignment(leftSide, rightSide);
         }else if(match(";")){
                 return new Ast.Statement.Expression(leftSide);
         }
-        throw new ParseException("Invalid Expression Case", tokens.get(0).getIndex());
+        throw new ParseException("Invalid Expression Case", tokens.has(0) ? tokens.get(0).getIndex() : -1);
     }
 
     /**
@@ -190,12 +191,13 @@ public final class Parser {
 
             if(match("(")){
                 List<Ast.Expression> args = new ArrayList<>();
-                if(!match(")")){
+                while(!match(")")){
                     args.add(parseExpression());
                     if(match(",")){
-                        args.add(parseExpression());
+                        continue;
+                    }else if(!peek(")")){
+                        throw new ParseException("Missing , or )", tokens.get(0).getIndex());
                     }
-                    throw new ParseException("No End Parenthesis", tokens.get(0).getIndex());
                 }
                 leftSide = new Ast.Expression.Function(Optional.of(leftSide), id, args);
             }else{
@@ -228,9 +230,17 @@ public final class Parser {
         if (match("NIL")) return new Ast.Expression.Literal(null);
 
         if (peek(Token.Type.STRING)) {
-            String value = tokens.get(0).getLiteral()
-                    .replace("\"", "")
-                    .replace("\\n", "\n");
+            String value = tokens.get(0).getLiteral();
+            if(value.length() >= 2 && value.startsWith("\"") && value.endsWith("\"")){
+                value = value.substring(1, value.length()-1);
+            }
+            value = value.replace("\\\\", "\\")
+                    .replace("\\b", "\b")
+                    .replace("\\n", "\n")
+                    .replace("\\r", "\r")
+                    .replace("\\t", "\t")
+                    .replace("\\'", "'")
+                    .replace("\\\"", "\"");
             match(Token.Type.STRING);
             return new Ast.Expression.Literal(value);
         }
@@ -248,15 +258,38 @@ public final class Parser {
         }
 
         if (peek(Token.Type.CHARACTER)) {
-            String value = tokens.get(0).getLiteral().replace("'", "");
+            String value = tokens.get(0).getLiteral();
+            if(value.length() >= 2 && value.startsWith("'") && value.endsWith("'")){
+                value = value.substring(1, value.length()-1);
+            }
+            char character;
+            if(value.length() == 1){
+                character = value.charAt(0);
+            }else if(value.equals("\\b")){
+                character = '\b';
+            }else if(value.equals("\\n")){
+                character = '\n';
+            }else if(value.equals("\\r")){
+                character = '\r';
+            }else if(value.equals("\\t")){
+                character = '\t';
+            }else if(value.equals("\\'")){
+                character = '\'';
+            }else if(value.equals("\\\"")){
+                character = '\"';
+            }else if(value.equals("\\\\")){
+                character = '\\';
+            }else{
+                throw new ParseException("Invalid Char Expr", tokens.get(0).getIndex());
+            }
             match(Token.Type.CHARACTER);
-            return new Ast.Expression.Literal(value.charAt(0));
+            return new Ast.Expression.Literal(character);
         }
 
         if (match("(")) {
             Ast.Expression expr = parseExpression();
             if (!match(")")) {
-                throw new ParseException("Expected ')' after expression.", 0);
+                throw new ParseException("Expected ')' after expression.", tokens.has(0) ? tokens.get(0).getIndex() : tokens.get(-1).getIndex() + 1);
             }
             return new Ast.Expression.Group(expr);
         }
