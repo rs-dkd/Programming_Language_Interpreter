@@ -56,7 +56,8 @@ public final class Parser {
         Optional<Ast.Expression> val = Optional.empty();
         if(match("=")){
             val = Optional.of(parseExpression());
-        }else if(!match(";")){
+        }
+        if(!match(";")){
             throw new ParseException("No semicolon", tokens.get(0).getIndex());
         }
         return new Ast.Field(name, constTracker, val);
@@ -470,7 +471,7 @@ public final class Parser {
      * and advances the token stream.
      */
     private boolean match(Object... patterns) {
-        boolean peek = peekAny(patterns);
+        boolean peek = peek(patterns);
         if(peek){
             for(int i = 0; i < patterns.length; i++){
                 tokens.advance();
