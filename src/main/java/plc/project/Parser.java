@@ -26,6 +26,12 @@ public final class Parser {
         this.tokens = new TokenStream(tokens);
     }
 
+    private void skipNewline() {
+        while (peek("\\n")) {
+            match("\\n");
+        }
+    }
+
     /**
      * Parses the {@code source} rule.
      */
@@ -34,10 +40,17 @@ public final class Parser {
         List<Ast.Method> methods = new ArrayList<>();
         while(peek("LET")){
             fields.add(parseField());
+            skipNewline();
         }
         while(peek("DEF")){
             methods.add(parseMethod());
+            skipNewline();
         }
+
+        if (tokens.has(0)) {
+            throw new ParseException("Unexpected token: ", tokens.get(0).getIndex());
+        }
+
         return new Ast.Source(fields, methods);
     }
 
@@ -56,6 +69,8 @@ public final class Parser {
         Optional<Ast.Expression> val = Optional.empty();
         if(match("=")){
             val = Optional.of(parseExpression());
+        } else {
+            throw new ParseException("No assignment after LET", tokens.get(0).getIndex());
         }
         if(!match(";")){
             throw new ParseException("No semicolon", tokens.get(0).getIndex());
@@ -140,8 +155,8 @@ public final class Parser {
         Optional<Ast.Expression> val = Optional.empty();
         if(match("=")){
             val = Optional.of(parseExpression());
-        }else if(!match(";")){
-            throw new ParseException("No semicolon", tokens.get(0).getIndex());
+        } else if(!match(";")) {
+            throw new ParseException("Missing semicolon", tokens.get(0).getIndex());
         }
         return new Ast.Statement.Declaration(name, val);
     }
@@ -483,7 +498,7 @@ public final class Parser {
     private void consume(String tokenLiteral, Object... patterns) {
         Object[] filteredPatterns = Arrays
                 .stream(patterns)
-                .filter(pattern -> pattern instanceof String && tokenLiteral == pattern)
+                .filter(pattern -> pattern instanceof String && tokenLiteral.equals(pattern))
                 .toArray();
         if (peekAny(filteredPatterns)) {
             match(filteredPatterns);

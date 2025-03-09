@@ -440,6 +440,66 @@ final class ParserTests {
     }
 
     @Test
+    void testFieldMethod() {
+        List<Token> input = Arrays.asList(
+                /**
+                 * LET name = expr;\nDEF name() DO stmt; END
+                 */
+                new Token(Token.Type.IDENTIFIER, "LET", 0),
+                new Token(Token.Type.IDENTIFIER, "name", 4),
+                new Token(Token.Type.OPERATOR, "=", 9),
+                new Token(Token.Type.IDENTIFIER, "expr", 11),
+                new Token(Token.Type.OPERATOR, ";", 15),
+                new Token(Token.Type.IDENTIFIER, "\\n", 16),
+                new Token(Token.Type.IDENTIFIER, "DEF", 18),
+                new Token(Token.Type.IDENTIFIER, "name", 22),
+                new Token(Token.Type.OPERATOR, "(", 26),
+                new Token(Token.Type.OPERATOR, ")", 27),
+                new Token(Token.Type.IDENTIFIER, "DO", 29),
+                new Token(Token.Type.IDENTIFIER, "stmt", 32),
+                new Token(Token.Type.OPERATOR, ";", 36),
+                new Token(Token.Type.IDENTIFIER, "END", 38)
+
+        );
+        Ast.Source expected = new Ast.Source(
+                Arrays.asList(new Ast.Field("name", false, Optional.of(new Ast.Expression.Access(Optional.empty(), "expr")))),
+                Arrays.asList(new Ast.Method("name", Arrays.asList(), Arrays.asList(
+                        new Ast.Statement.Expression(new Ast.Expression.Access(Optional.empty(), "stmt"))
+                )))
+        );
+
+        test(input, expected, Parser::parseSource);
+    }
+
+    @Test
+    void testMethodField() {
+        List<Token> input = Arrays.asList(
+                /**
+                 * DEF name() DO stmt; END\nLET name = expr;
+                 */
+                new Token(Token.Type.IDENTIFIER, "DEF", 0),
+                new Token(Token.Type.IDENTIFIER, "name", 4),
+                new Token(Token.Type.OPERATOR, "(", 8),
+                new Token(Token.Type.OPERATOR, ")", 9),
+                new Token(Token.Type.IDENTIFIER, "DO", 11),
+                new Token(Token.Type.IDENTIFIER, "stmt", 14),
+                new Token(Token.Type.OPERATOR, ";", 18),
+                new Token(Token.Type.IDENTIFIER, "END", 20),
+                new Token(Token.Type.IDENTIFIER, "\\n", 24),
+                new Token(Token.Type.IDENTIFIER, "LET", 26),
+                new Token(Token.Type.IDENTIFIER, "name", 30),
+                new Token(Token.Type.OPERATOR, "=", 35),
+                new Token(Token.Type.IDENTIFIER, "expr", 37),
+                new Token(Token.Type.OPERATOR, ";", 41)
+        );
+
+        Ast.Source expected = null;
+
+        test(input, expected, Parser::parseSource);
+
+    }
+
+    @Test
     void testExample1() {
         List<Token> input = Arrays.asList(
                 /**
