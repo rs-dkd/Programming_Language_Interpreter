@@ -20,6 +20,7 @@ import java.util.stream.Stream;
  */
 final class ParserTests {
 
+
     @ParameterizedTest
     @MethodSource
     void testSource(String test, List<Token> tokens, Ast.Source expected) {
@@ -326,6 +327,40 @@ final class ParserTests {
                                 new Ast.Expression.Access(Optional.empty(), "expr2")
                         )
                 ),
+                Arguments.of("Binary And",
+                        Arrays.asList(
+                                // expr1 && expr2
+                                new Token(Token.Type.IDENTIFIER, "expr1", 0),
+                                new Token(Token.Type.OPERATOR, "AND", 6),
+                                new Token(Token.Type.IDENTIFIER, "expr2", 11)
+                        ),
+                        new Ast.Expression.Binary("AND",
+                                new Ast.Expression.Access(Optional.empty(), "expr1"),
+                                new Ast.Expression.Access(Optional.empty(), "expr2")
+                        )
+                ),
+                Arguments.of("Binary Or",
+                        Arrays.asList(
+                                new Token(Token.Type.IDENTIFIER, "expr1", 0),
+                                new Token(Token.Type.OPERATOR, "||", 6),
+                                new Token(Token.Type.IDENTIFIER, "expr2", 10)
+                        ),
+                        new Ast.Expression.Binary("||",
+                                new Ast.Expression.Access(Optional.empty(), "expr1"),
+                                new Ast.Expression.Access(Optional.empty(), "expr2")
+                        )
+                ),
+                Arguments.of("Binary Or",
+                        Arrays.asList(
+                                new Token(Token.Type.IDENTIFIER, "expr1", 0),
+                                new Token(Token.Type.OPERATOR, "OR", 6),
+                                new Token(Token.Type.IDENTIFIER, "expr2", 11)
+                        ),
+                        new Ast.Expression.Binary("OR",
+                                new Ast.Expression.Access(Optional.empty(), "expr1"),
+                                new Ast.Expression.Access(Optional.empty(), "expr2")
+                        )
+                ),
                 Arguments.of("Binary Equality",
                         Arrays.asList(
                                 // expr1 == expr2
@@ -575,6 +610,42 @@ final class ParserTests {
         test(input, expected, Parser::parseSource);
     }
 
+    @Test
+    void testMissingClosingParenthesis(){
+        List<Token> input = Arrays.asList(
+                // (expr
+                new Token(Token.Type.OPERATOR, "(", 0),
+                new Token(Token.Type.IDENTIFIER, "expr", 1)
+        );
+        test(input, null, Parser::parseExpression);
+    }
+
+    @Test
+    void testInvalidDo(){
+        List<Token> input = Arrays.asList(
+                // IF expr DO DO stmt; END
+                new Token(Token.Type.IDENTIFIER, "IF", 0),
+                new Token(Token.Type.IDENTIFIER, "expr", 3),
+                new Token(Token.Type.IDENTIFIER, "DO", 8),
+                new Token(Token.Type.IDENTIFIER, "DO", 11),
+                new Token(Token.Type.IDENTIFIER, "stmt", 14),
+                new Token(Token.Type.OPERATOR, ";", 18),
+                new Token(Token.Type.IDENTIFIER, "END", 20)
+        );
+        test(input, null, Parser::parseStatement);
+    }
+
+    @Test
+    void testIfStatementMissingDo(){
+        List<Token> input = Arrays.asList(
+                // IF expr stmt;
+                new Token(Token.Type.IDENTIFIER, "IF", 0),
+                new Token(Token.Type.IDENTIFIER, "expr", 3),
+                new Token(Token.Type.IDENTIFIER, "stmt", 8),
+                new Token(Token.Type.OPERATOR, ";", 12)
+        );
+        test(input, null, Parser::parseStatement);
+    }
     /**
      * Standard test function. If expected is null, a ParseException is expected
      * to be thrown (not used in the provided tests).

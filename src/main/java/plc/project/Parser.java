@@ -256,9 +256,9 @@ public final class Parser {
      */
     public Ast.Expression parseLogicalExpression() throws ParseException {
         Ast.Expression leftSide = parseEqualityExpression();
-        while(peekAny("&&", "||")){
+        while(peekAny("&&", "||", "AND", "OR")){
             String operator = tokens.get(0).getLiteral();
-            consume(operator, "&&", "||");
+            consume(operator, "&&", "||", "AND", "OR");
             Ast.Expression rightSide = parseEqualityExpression();
             leftSide = new Ast.Expression.Binary(operator, leftSide, rightSide);
         }
