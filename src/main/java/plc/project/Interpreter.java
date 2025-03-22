@@ -45,10 +45,12 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
     public Environment.PlcObject visit(Ast.Method ast) {
         scope.defineFunction(ast.getName(), ast.getParameters().size(), args -> {
             Scope curr = scope;
+            Scope methodScope = new Scope(curr);
             try{
                 for(int i = 0; i < args.size(); i++){
-                    scope.defineVariable(ast.getParameters().get(i), false, args.get(i));
+                    methodScope.defineVariable(ast.getParameters().get(i), false, args.get(i));
                 }
+                scope = methodScope;
                 for(Ast.Statement statement : ast.getStatements()){
                     visit(statement);
                 }
@@ -189,6 +191,7 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
     public Environment.PlcObject visit(Ast.Expression.Binary ast) {
         Environment.PlcObject left = visit(ast.getLeft());
         switch(ast.getOperator()){
+            case "AND":
             case "&&":{
                 requireType(Boolean.class, left);
                 if(!(Boolean) left.getValue()){
@@ -198,6 +201,7 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
                 requireType(Boolean.class, right);
                 return Environment.create((Boolean) right.getValue());
             }
+            case "OR":
             case "||":{
                 requireType(Boolean.class, left);
                 if((Boolean) left.getValue()){

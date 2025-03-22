@@ -395,6 +395,38 @@ final class InterpreterTests {
         );
     }
 
+    @ParameterizedTest
+    @MethodSource("testFunctionScope")
+    void testFunctionScope(String test, Ast ast, Object expected) {
+        test(ast, expected, new Scope(null));
+    }
+
+    private static Stream<Arguments> testFunctionScope() {
+        return Stream.of(
+                Arguments.of("Function Scope Test", new Ast.Source(
+                        Arrays.asList(
+                                new Ast.Field("x", false, Optional.of(new Ast.Expression.Literal(BigInteger.ONE))),
+                                new Ast.Field("y", false, Optional.of(new Ast.Expression.Literal(BigInteger.TWO)))
+                        ),
+                        Arrays.asList(
+                                new Ast.Method("f", Arrays.asList("z"), Arrays.asList(
+                                        new Ast.Statement.Return(new Ast.Expression.Binary("+",
+                                                new Ast.Expression.Access(Optional.empty(), "x"),
+                                                new Ast.Expression.Binary("+",
+                                                        new Ast.Expression.Access(Optional.empty(), "y"),
+                                                        new Ast.Expression.Access(Optional.empty(), "z")
+                                                )
+                                        ))
+                                )),
+                                new Ast.Method("main", Arrays.asList(), Arrays.asList(
+                                        new Ast.Statement.Declaration("y", Optional.of(new Ast.Expression.Literal(BigInteger.valueOf(4)))),
+                                        new Ast.Statement.Return(new Ast.Expression.Function(Optional.empty(), "f", Arrays.asList(new Ast.Expression.Literal(BigInteger.valueOf(5)))))
+                                ))
+                        )
+                ), BigInteger.valueOf(10))
+        );
+    }
+
     private static Scope test(Ast ast, Object expected, Scope scope) {
         Interpreter interpreter = new Interpreter(scope);
         if (expected != null) {
