@@ -1,5 +1,6 @@
 package plc.project;
 
+import java.lang.reflect.Parameter;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -50,12 +51,41 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Method ast) {
-        throw new UnsupportedOperationException();  // TODO
+        List<Environment.Type> paramTypes = ast.getParameters().stream()
+                .map(Environment::getType)
+                .toList();
+        this.scope.defineFunction(
+                ast.getName(),
+                ast.getName(),
+                paramTypes,
+                ast.getReturnTypeName().isPresent() ?
+                        Environment.getType(ast.getReturnTypeName().get()) : Environment.Type.NIL,
+                args -> Environment.NIL
+        );
+        Environment.Function function = scope.lookupFunction(ast.getName(), paramTypes.size());
+        ast.setFunction(function);
+
+        this.method = ast;
+        Scope methodScope = new Scope(this.scope);
+
+        for (int i = 0; i < this.method.getParameters().size(); i++) {
+            /* Not sure if Environment.NIL was correct here? */
+            methodScope.defineVariable(this.method.getParameters().get(i), false, Environment.NIL);
+        }
+
+        Scope prev = this.scope;
+        this.scope = methodScope;
+        for (int i = 0; i < this.method.getStatements().size(); i++) {
+            visit(this.method.getStatements().get(i));
+        }
+        this.scope = prev;
+        return null;
     }
 
     @Override
     public Void visit(Ast.Statement.Expression ast) {
-        throw new UnsupportedOperationException();  // TODO
+        if (!(ast.getExpression() instanceof Ast.Expression.Function)) throw new RuntimeException("Expression is not a function");
+        return null;
     }
 
     @Override
