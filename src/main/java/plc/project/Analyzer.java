@@ -25,7 +25,18 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Source ast) {
-        throw new UnsupportedOperationException();  // TODO
+        for (Ast.Method method : ast.getMethods()) {
+            if (method.getName().equals("main")) {
+                if (!method.getParameters().isEmpty()) {
+                    throw new RuntimeException("The main method should not have any parameters.");
+                }
+                if (method.getReturnTypeName().isEmpty() || !method.getReturnTypeName().get().equals("integer")) {
+                    throw new RuntimeException("The main method should return an integer.");
+                }
+                return null;
+            }
+        }
+        throw new RuntimeException("Main method not found.");
     }
 
     @Override
