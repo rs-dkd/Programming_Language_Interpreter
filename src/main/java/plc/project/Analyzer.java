@@ -40,6 +40,7 @@ public final class Analyzer implements Ast.Visitor<Void> {
         throw new RuntimeException("Main method not found.");
     }
 
+    /* TODO: Additionally, throws a RuntimeException if: The value, if present, is not assignable to the Field. For a value to be assignable, its type must be a subtype of the Field's type, as defined above. */
     @Override
     public Void visit(Ast.Field ast) {
         if (ast.getValue().isPresent()) visit(ast.getValue().get());
@@ -63,6 +64,7 @@ public final class Analyzer implements Ast.Visitor<Void> {
                 args -> Environment.NIL
         );
         Environment.Function function = scope.lookupFunction(ast.getName(), paramTypes.size());
+
         ast.setFunction(function);
 
         this.method = ast;
@@ -88,9 +90,19 @@ public final class Analyzer implements Ast.Visitor<Void> {
         return null;
     }
 
+    /* TODO: Additionally, throws a RuntimeException if: The value, if present, is not assignable to the variable (see Ast.Field for info).*/
     @Override
     public Void visit(Ast.Statement.Declaration ast) {
-        throw new UnsupportedOperationException();  // TODO
+        if (ast.getValue().isPresent()) visit(ast.getValue().get());
+
+        this.scope.defineVariable(
+                ast.getName(),
+                ast.getName(),
+                ast.getTypeName().isPresent() ? Environment.getType(ast.getTypeName().get()) : ast.getValue().orElseThrow().getType(),
+                ast.getVariable().getConstant(),
+                Environment.NIL);
+
+        return null;
     }
 
     @Override
