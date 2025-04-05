@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -107,16 +108,48 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Statement.Assignment ast) {
-        throw new UnsupportedOperationException();  // TODO
+        if (!(ast.getReceiver() instanceof Ast.Expression.Access accessExpression))
+            throw new RuntimeException("The receiver is not an Access expression");
+
+
+        /* TODO: The value is not assignable to the receiver (see Ast.Field for info). */
+
+        scope.defineVariable(accessExpression.getVariable().getName(), true, accessExpression.getVariable().getValue());
+        return null;
     }
 
     @Override
     public Void visit(Ast.Statement.If ast) {
-        throw new UnsupportedOperationException();  // TODO
+        if (ast.getCondition().getType() != Environment.Type.BOOLEAN)
+            throw new RuntimeException("The condition is not of type Boolean");
+
+        if (ast.getThenStatements().isEmpty())
+            throw new RuntimeException("The thenStatements list is empty.");
+
+        Scope scope = new Scope(this.scope);
+
+        Scope prev = this.scope;
+        this.scope = scope;
+
+        ast.getThenStatements().forEach(this::visit);
+        ast.getElseStatements().forEach(this::visit);
+
+        this.scope = prev;
+        return null;
     }
 
     @Override
     public Void visit(Ast.Statement.For ast) {
+
+
+        if (ast.getCondition().getType() != Environment.Type.BOOLEAN)
+            throw new RuntimeException("The condition is not of type Boolean");
+
+
+
+        if (ast.getStatements().isEmpty())
+            throw new RuntimeException("The list of statements is empty.")
+
         throw new UnsupportedOperationException();  // TODO
     }
 
