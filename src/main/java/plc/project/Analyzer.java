@@ -41,7 +41,11 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Field ast) {
-        throw new UnsupportedOperationException();  // TODO
+        if (ast.getValue().isPresent()) visit(ast.getValue().get());
+
+        this.scope.defineVariable(ast.getName(), ast.getName(), Environment.getType(ast.getTypeName()), ast.getConstant(), Environment.NIL);
+        ast.setVariable(scope.lookupVariable(ast.getName()));
+        return null;
     }
 
     @Override
