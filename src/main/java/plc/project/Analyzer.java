@@ -115,15 +115,15 @@ public final class Analyzer implements Ast.Visitor<Void> {
         if (ast.getTypeName().isPresent() && ast.getValue().isPresent())
             requireAssignable(type, ast.getValue().get().getType());
 
-        this.scope.defineVariable(
+        Environment.Variable variable = this.scope.defineVariable(
                 ast.getName(),
                 ast.getName(),
-                ast.getTypeName().isPresent() ? Environment.getType(ast.getTypeName().get()) : ast.getValue().orElseThrow().getType(),
-                ast.getVariable().getConstant(),
-                Environment.NIL);
+                type,
+                false,
+                Environment.NIL
+        );
+        ast.setVariable(variable);
 
-        ast.setVariable(this.scope.lookupVariable(ast.getName()));
-        
         return null;
     }
 
@@ -147,20 +147,25 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Statement.If ast) {
+        visit(ast.getCondition());
         if (ast.getCondition().getType() != Environment.Type.BOOLEAN)
             throw new RuntimeException("The condition is not of type Boolean");
 
         if (ast.getThenStatements().isEmpty())
             throw new RuntimeException("The thenStatements list is empty.");
 
-        Scope scope = new Scope(this.scope);
+        Scope thenScope = new Scope(this.scope);
+        Scope elseScope = new Scope(this.scope);
 
         Scope prev = this.scope;
-        this.scope = scope;
-
-        ast.getThenStatements().forEach(this::visit);
-        ast.getElseStatements().forEach(this::visit);
-
+        this.scope = thenScope;
+        for(Ast.Statement stmt : ast.getThenStatements()){
+            visit(stmt);
+        }
+        this.scope = elseScope;
+        for(Ast.Statement stmt : ast.getElseStatements()){
+            visit(stmt);
+        }
         this.scope = prev;
         return null;
     }
@@ -295,10 +300,12 @@ public final class Analyzer implements Ast.Visitor<Void> {
                 return null;
             }
             case "<", "<=", ">", ">=", "==", "!=" -> {
-                if (ast.getLeft().getType() != Environment.Type.COMPARABLE || ast.getRight().getType() != Environment.Type.COMPARABLE)
-                    throw new RuntimeException("Both operands must be Comparable and of the same type.");
-                if (ast.getLeft().getType() != ast.getRight().getType())
-                    throw new RuntimeException("Result type will be Boolean.");
+                if(!isComparable(ast.getLeft().getType()) || !isComparable(ast.getRight().getType())){
+                    throw new RuntimeException("Both operands must be Comparable.");
+                }
+                if(ast.getLeft().getType() != ast.getRight().getType()){
+                    throw new RuntimeException("Both operands must be the same type.");
+                }
                 ast.setType(Environment.Type.BOOLEAN);
                 return null;
             }
@@ -332,6 +339,10 @@ public final class Analyzer implements Ast.Visitor<Void> {
         throw new RuntimeException("The operator is not valid");
     }
 
+    private boolean isComparable(Environment.Type type){
+        return type == Environment.Type.COMPARABLE || type == Environment.Type.INTEGER || type == Environment.Type.DECIMAL || type == Environment.Type.CHARACTER || type == Environment.Type.STRING;
+    }
+
     @Override
     public Void visit(Ast.Expression.Access ast) {
         Environment.Variable variable;
@@ -352,7 +363,7 @@ public final class Analyzer implements Ast.Visitor<Void> {
             visit(ast.getReceiver().get());
             Environment.Type type = ast.getReceiver().get().getType();
             try {
-                function = type.getFunction(ast.getName(), ast.getArguments().size() + 1);
+                function = type.getFunction(ast.getName(), ast.getArguments().size());
             } catch (RuntimeException e) {
                 throw new RuntimeException("Function not found in the receiver's type.");
             }
