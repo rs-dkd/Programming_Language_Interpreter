@@ -140,22 +140,27 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Statement.For ast) {
-
+        //Environment.getType(ast.)
+        //if (((Ast.Statement.For)ast.getInitialization())..getType() != Environment.Type.COMPARABLE)
 
         if (ast.getCondition().getType() != Environment.Type.BOOLEAN)
             throw new RuntimeException("The condition is not of type Boolean");
 
-
+        if (ast.getIncrement() != ast.get);
 
         if (ast.getStatements().isEmpty())
-            throw new RuntimeException("The list of statements is empty.")
+            throw new RuntimeException("The list of statements is empty.");
 
         throw new UnsupportedOperationException();  // TODO
     }
 
     @Override
     public Void visit(Ast.Statement.While ast) {
-        throw new UnsupportedOperationException();  // TODO
+        if (ast.getCondition().getType() != Environment.Type.BOOLEAN)
+            throw new RuntimeException("The value is not of type boolean");
+
+        ast.getStatements().forEach(this::visit);
+        return null;
     }
 
     @Override
@@ -165,7 +170,32 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Expression.Literal ast) {
-        throw new UnsupportedOperationException();  // TODO
+        final Object literal = ast.getLiteral();
+        if (literal)
+        if (type == Environment.Type.NIL ||
+            type == Environment.Type.BOOLEAN ||
+            type == Environment.Type.CHARACTER ||
+            type == Environment.Type.STRING
+        ) return null;
+
+        if (type == Environment.Type.INTEGER)
+            try {
+                BigInteger.valueOf((long) ast.getLiteral());
+            } catch(Exception e) {
+                throw new RuntimeException(e);
+            }
+
+        if (type == Environment.Type.DECIMAL)
+            try {
+                new BigDecimal(ast.getLiteral().toString()).doubleValue();
+            } catch(Exception e) {
+                throw new RuntimeException(e);
+            }
+
+        ast.setType();
+
+
+        return null;
     }
 
     @Override
