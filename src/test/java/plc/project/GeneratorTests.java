@@ -270,6 +270,85 @@ END
         );
     }
 
+    @ParameterizedTest(name = "{0}")
+    @MethodSource
+    void testWhileMultipleStatements(String test, Ast.Statement.While ast, String expected) {
+        test(ast, expected);
+    }
+
+    private static Stream<Arguments> testWhileMultipleStatements() {
+        return Stream.of(
+            Arguments.of(
+                "Multiple Statements",
+                new Ast.Statement.While(
+                    init(
+                        new Ast.Expression.Binary("<",
+                            init(
+                                new Ast.Expression.Access(Optional.empty(), "num"),
+                                ast -> ast.setVariable(new Environment.Variable("num", "num", Environment.Type.INTEGER, false, Environment.NIL))
+                            ),
+                            init(
+                                new Ast.Expression.Literal(BigInteger.valueOf(10)),
+                                ast -> ast.setType(Environment.Type.INTEGER)
+                            )
+                        ),
+                        ast -> ast.setType(Environment.Type.BOOLEAN)
+                    ),
+                    Arrays.asList(
+                        new Ast.Statement.Expression(
+                            init(
+                                new Ast.Expression.Function(Optional.empty(), "print",
+                                    Arrays.asList(
+                                        init(
+                                            new Ast.Expression.Binary("+",
+                                                init(
+                                                    new Ast.Expression.Access(Optional.empty(), "num"),
+                                                    ast -> ast.setVariable(new Environment.Variable("num", "num", Environment.Type.INTEGER, false, Environment.NIL))
+                                                ),
+                                                init(
+                                                    new Ast.Expression.Literal("\n"),
+                                                    ast -> ast.setType(Environment.Type.STRING)
+                                                )
+                                            ),
+                                            ast -> ast.setType(Environment.Type.STRING)
+                                        )
+                                    )
+                                ),
+                                ast -> ast.setFunction(new Environment.Function("print", "System.out.println",
+                                    Arrays.asList(Environment.Type.ANY), Environment.Type.NIL, args -> Environment.NIL))
+                            )
+                        ),
+                        new Ast.Statement.Assignment(
+                            init(
+                                new Ast.Expression.Access(Optional.empty(), "num"),
+                                ast -> ast.setVariable(new Environment.Variable("num", "num", Environment.Type.INTEGER, false, Environment.NIL))
+                            ),
+                            init(
+                                new Ast.Expression.Binary("+",
+                                    init(
+                                        new Ast.Expression.Access(Optional.empty(), "num"),
+                                        ast -> ast.setVariable(new Environment.Variable("num", "num", Environment.Type.INTEGER, false, Environment.NIL))
+                                    ),
+                                    init(
+                                        new Ast.Expression.Literal(BigInteger.ONE),
+                                        ast -> ast.setType(Environment.Type.INTEGER)
+                                    )
+                                ),
+                                ast -> ast.setType(Environment.Type.INTEGER)
+                            )
+                        )
+                    )
+                ),
+                String.join(System.lineSeparator(),
+                    "while (num < 10) {",
+                    "    System.out.println(num + \"\\n\");",
+                    "    num = num + 1;",
+                    "}"
+                )
+            )
+        );
+    }
+
 
     @ParameterizedTest(name = "{0}")
     @MethodSource

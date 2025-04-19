@@ -191,10 +191,10 @@ public final class Generator implements Ast.Visitor<Void> {
         print("while (", ast.getCondition(), ") {");
         if(!ast.getStatements().isEmpty()){
             for(Ast.Statement statement : ast.getStatements()){
-                newline(2);
+                newline(1);
                 visit(statement);
             }
-            newline(1);
+            newline(0);
         }
         print("}");
         return null;
@@ -209,7 +209,7 @@ public final class Generator implements Ast.Visitor<Void> {
     @Override
     public Void visit(Ast.Expression.Literal ast) {
         if(ast.getLiteral() instanceof String){
-            print("\"", ast.getLiteral(), "\"");
+            print("\"", ast.getLiteral().toString().replace("\n", "\\n"), "\"");
         }else{
             print(ast.getLiteral());
         }
