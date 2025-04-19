@@ -167,6 +167,109 @@ public class GeneratorTests {
         );
     }
 
+    /*
+     * 
+Method (2)
+
+Square:
+DEF square(num: Decimal): Decimal DO
+    RETURN num * num;
+END
+Multiple Statements:
+DEF func(x: Integer, y: Decimal, z: String) DO
+    print(x);
+    print(y);
+    print(z);
+END
+     */
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource
+    void testMethodSquare(String test, Ast.Method ast, String expected) {
+        test(ast, expected);
+    }
+
+    private static Stream<Arguments> testMethodSquare() {
+        return Stream.of(
+            Arguments.of(
+                "Square",
+                init(new Ast.Method(
+                        "square",
+                        Arrays.asList("num"),
+                        Arrays.asList("Decimal"),
+                        Optional.of("Decimal"),
+                        Arrays.asList(
+                            new Ast.Statement.Return(
+                                init(new Ast.Expression.Binary("*",
+                                        init(new Ast.Expression.Access(Optional.empty(), "num"),
+                                                ast -> ast.setVariable(new Environment.Variable("num", "num", Environment.Type.DECIMAL, true, Environment.NIL))),
+                                        init(new Ast.Expression.Access(Optional.empty(), "num"),
+                                                ast -> ast.setVariable(new Environment.Variable("num", "num", Environment.Type.DECIMAL, true, Environment.NIL)))
+                                ), ast -> ast.setType(Environment.Type.DECIMAL))
+                            )
+                        )
+                    ),
+                    ast -> ast.setFunction(new Environment.Function("square", "square", Arrays.asList(Environment.Type.DECIMAL), Environment.Type.DECIMAL, args -> Environment.NIL))
+                ),
+                String.join(System.lineSeparator(),
+                    "double square(double num) {",
+                    "    return num * num;",
+                    "}"
+                )
+
+            )
+        );
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource
+    void testMethodMultipleStatements(String test, Ast.Method ast, String expected) {
+        test(ast, expected);
+    }
+
+    private static Stream<Arguments> testMethodMultipleStatements() {
+        return Stream.of(
+            Arguments.of(
+                "Multiple Statements",
+                init(new Ast.Method(
+                        "func",
+                        Arrays.asList("x", "y", "z"),
+                        Arrays.asList("Integer", "Decimal", "String"),
+                        Optional.empty(),
+                        Arrays.asList(
+                            new Ast.Statement.Expression(
+                                init(new Ast.Expression.Function(Optional.empty(),"print", Arrays.asList(
+                                        init(new Ast.Expression.Access(Optional.empty(), "x"),
+                                                ast -> ast.setVariable(new Environment.Variable("x", "x", Environment.Type.INTEGER, true, Environment.NIL))))
+                                ), ast -> ast.setFunction(new Environment.Function("print", "System.out.println", Arrays.asList(Environment.Type.ANY), Environment.Type.NIL, args -> Environment.NIL)))
+                            ),
+                            new Ast.Statement.Expression(
+                                init(new Ast.Expression.Function(Optional.empty(),"print", Arrays.asList(
+                                        init(new Ast.Expression.Access(Optional.empty(), "y"),
+                                                ast -> ast.setVariable(new Environment.Variable("y", "y", Environment.Type.DECIMAL, true, Environment.NIL))))
+                                ), ast -> ast.setFunction(new Environment.Function("print", "System.out.println", Arrays.asList(Environment.Type.ANY), Environment.Type.NIL, args -> Environment.NIL)))
+                            ),
+                            new Ast.Statement.Expression(
+                                init(new Ast.Expression.Function(Optional.empty(),"print", Arrays.asList(
+                                        init(new Ast.Expression.Access(Optional.empty(), "z"),
+                                                ast -> ast.setVariable(new Environment.Variable("z", "z", Environment.Type.STRING, true, Environment.NIL))))
+                                ), ast -> ast.setFunction(new Environment.Function("print", "System.out.println", Arrays.asList(Environment.Type.ANY), Environment.Type.NIL, args -> Environment.NIL)))
+                            )
+                        )
+                    ),
+                    ast -> ast.setFunction(new Environment.Function("func", "func", Arrays.asList(Environment.Type.INTEGER, Environment.Type.DECIMAL, Environment.Type.STRING), Environment.Type.NIL, args -> Environment.NIL))
+                ),
+                String.join(System.lineSeparator(),
+                    "void func(int x, double y, String z) {",
+                    "    System.out.println(x);",
+                    "    System.out.println(y);",
+                    "    System.out.println(z);",
+                    "}"
+                )
+            )
+        );
+    }
+
 
     @ParameterizedTest(name = "{0}")
     @MethodSource
