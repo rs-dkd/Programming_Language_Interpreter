@@ -1,19 +1,15 @@
 package plc.project;
 
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Tags;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import javax.swing.text.html.Option;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
@@ -59,6 +55,118 @@ public class GeneratorTests {
                 )
         );
     }
+
+    /*
+    LET x: Integer;
+    LET y: Decimal;
+    LET z: String;
+    DEF f(): Integer DO RETURN x; END
+    DEF g(): Decimal DO RETURN y; END
+    DEF h(): String DO RETURN z; END
+    DEF main(): Integer DO END
+     */
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource
+    void testSourceMultipleFieldsAndMethods(String test, Ast.Source ast, String expected) {
+        test(ast, expected);
+    }
+
+    private static Stream<Arguments> testSourceMultipleFieldsAndMethods() {
+        return Stream.of(
+            Arguments.of(
+                "Multiple Fields and Methods",
+                new Ast.Source(
+                    Arrays.asList(
+                        init(new Ast.Field("x", "Integer", true, Optional.empty()), ast -> ast.setVariable(new Environment.Variable("x", "x", Environment.Type.INTEGER, true, Environment.NIL))),
+                        init(new Ast.Field("y", "Decimal", true, Optional.empty()), ast -> ast.setVariable(new Environment.Variable("y", "y", Environment.Type.DECIMAL, true, Environment.NIL))),
+                        init(new Ast.Field("z", "String", true, Optional.empty()), ast -> ast.setVariable(new Environment.Variable("z", "z", Environment.Type.STRING, true, Environment.NIL)))
+                    ),
+                    Arrays.asList(
+                        init(new Ast.Method(
+                                "f",
+                                Arrays.asList(),
+                                Arrays.asList(),
+                                Optional.of("Integer"),
+                                Arrays.asList(
+                                    new Ast.Statement.Return(
+                                        init(new Ast.Expression.Access(Optional.empty(), "x"),
+                                             ast -> ast.setVariable(new Environment.Variable("x", "x", Environment.Type.INTEGER, true, Environment.NIL)))
+                                    )
+                                )
+                            ),
+                            ast -> ast.setFunction(new Environment.Function("f", "f", Arrays.asList(), Environment.Type.INTEGER, args -> Environment.NIL))
+                        ),
+                        init(new Ast.Method(
+                                "g",
+                                Arrays.asList(),
+                                Arrays.asList(),
+                                Optional.of("Decimal"),
+                                Arrays.asList(
+                                    new Ast.Statement.Return(
+                                        init(new Ast.Expression.Access(Optional.empty(), "y"),
+                                             ast -> ast.setVariable(new Environment.Variable("y", "y", Environment.Type.DECIMAL, true, Environment.NIL)))
+                                    )
+                                )
+                            ),
+                            ast -> ast.setFunction(new Environment.Function("g", "g", Arrays.asList(), Environment.Type.DECIMAL, args -> Environment.NIL))
+                        ),
+                        init(new Ast.Method(
+                                "h",
+                                Arrays.asList(),
+                                Arrays.asList(),
+                                Optional.of("String"),
+                                Arrays.asList(
+                                    new Ast.Statement.Return(
+                                        init(new Ast.Expression.Access(Optional.empty(), "z"),
+                                             ast -> ast.setVariable(new Environment.Variable("z", "z", Environment.Type.STRING, true, Environment.NIL)))
+                                    )
+                                )
+                            ),
+                            ast -> ast.setFunction(new Environment.Function("h", "h", Arrays.asList(), Environment.Type.STRING, args -> Environment.NIL))
+                        ),
+                        init(new Ast.Method(
+                                "main",
+                                Arrays.asList(),
+                                Arrays.asList(),
+                                Optional.of("Integer"),
+                                Arrays.asList()
+                            ),
+                            ast -> ast.setFunction(new Environment.Function("main", "main", Arrays.asList(), Environment.Type.INTEGER, args -> Environment.NIL))
+                        )
+                    )
+                ),
+                String.join(System.lineSeparator(),
+                    "public class Main {",
+                    "",
+                    "    final int x;",
+                    "    final double y;",
+                    "    final String z;",
+                    "",
+                    "    int f() {",
+                    "        return x;",
+                    "    }",
+                    "",
+                    "    double g() {",
+                    "        return y;",
+                    "    }",
+                    "",
+                    "    String h() {",
+                    "        return z;",
+                    "    }",
+                    "",
+                    "    public static void main(String[] args) {",
+                    "        System.exit(new Main().main());",
+                    "    }",
+                    "",
+                    "    int main() {}",
+                    "",
+                    "}"
+                )
+            )
+        );
+    }
+
 
     @ParameterizedTest(name = "{0}")
     @MethodSource

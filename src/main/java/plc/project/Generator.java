@@ -32,10 +32,17 @@ public final class Generator implements Ast.Visitor<Void> {
     public Void visit(Ast.Source ast) {
         print("public class Main {");
         if(!ast.getFields().isEmpty()){
+            newline(0);
             for(Ast.Field field : ast.getFields()){
                 newline(1);
                 visit(field);
             }
+        }
+        for(Ast.Method method : ast.getMethods()){
+            if(method.getName().equals("main")) continue;
+            newline(0);
+            newline(1);
+            visit(method);
         }
         newline(0);
         newline(1);
@@ -45,6 +52,7 @@ public final class Generator implements Ast.Visitor<Void> {
         newline(1);
         print("}");
         for(Ast.Method method : ast.getMethods()){
+            if (!method.getName().equals("main")) continue;
             newline(0);
             newline(1);
             visit(method);
@@ -57,9 +65,7 @@ public final class Generator implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Field ast) {
-        if(ast.getConstant()){
-            print("final ");
-        }
+        if (ast.getConstant()) print("final ");
         print(ast.getVariable().getType().getJvmName(), " ", ast.getVariable().getJvmName());
         if(ast.getValue().isPresent()){
             print(" = ", ast.getValue().get());
