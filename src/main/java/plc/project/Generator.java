@@ -87,7 +87,7 @@ public final class Generator implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Method ast) {
-        print(ast.getFunction().getReturnType() == Environment.Type.NIL ? "void" : ast.getFunction().getReturnType().getJvmName(), " ", ast.getFunction().getJvmName(), "(");
+        print(ast.getFunction().getReturnType().getJvmName(), " ", ast.getFunction().getJvmName(), "(");
         for(int i = 0; i < ast.getParameters().size(); i++){
             if(i > 0) print(", ");
             print(ast.getFunction().getParameterTypes().get(i).getJvmName(), " ", ast.getParameters().get(i));

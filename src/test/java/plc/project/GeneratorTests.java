@@ -155,11 +155,13 @@ public class GeneratorTests {
                     "        return z;",
                     "    }",
                     "",
-                    "    public static void main(String[] args) {",
+                    "    public static Void main(String[] args) {",
                     "        System.exit(new Main().main());",
                     "    }",
                     "",
-                    "    int main() {}",
+                    "    int main() {",
+                    "        return 0;",
+                    "    }",
                     "",
                     "}"
                 )
@@ -260,7 +262,7 @@ END
                     ast -> ast.setFunction(new Environment.Function("func", "func", Arrays.asList(Environment.Type.INTEGER, Environment.Type.DECIMAL, Environment.Type.STRING), Environment.Type.NIL, args -> Environment.NIL))
                 ),
                 String.join(System.lineSeparator(),
-                    "void func(int x, double y, String z) {",
+                    "Void func(int x, double y, String z) {",
                     "    System.out.println(x);",
                     "    System.out.println(y);",
                     "    System.out.println(z);",
