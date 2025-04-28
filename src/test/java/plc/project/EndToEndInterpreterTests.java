@@ -235,12 +235,12 @@ final class EndToEndInterpreterTests {
         return Stream.of(
                 // TRUE && FALSE
                 Arguments.of("And",
-                        "TRUE AND FALSE",
+                        "TRUE && FALSE",
                         false
                 ),
                 // TRUE || undefined
                 Arguments.of("Or (Short Circuit)",
-                        "TRUE OR undefined",
+                        "TRUE || undefined",
                         true
                 ),
                 // 1 < 10

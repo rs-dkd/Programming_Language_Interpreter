@@ -334,8 +334,14 @@ public final class Parser {
      */
     public Ast.Expression parseLogicalExpression() throws ParseException {
         Ast.Expression leftSide = parseEqualityExpression();
-        while(peek("AND") || peek("OR")){
+        while(peek("AND") || peek("OR") || peek("&") || peek("|")){
             String operator = tokens.get(0).getLiteral();
+            if (peek("&") || peek("|")) {
+                this.tokens.advance();
+                this.tokens.advance();
+            }
+            if (operator.equalsIgnoreCase("&")) operator = "AND";
+            if (operator.equalsIgnoreCase("|")) operator = "OR";
             match(operator);
             if(!tokens.has(0)){
                 throw new ParseException("Missing right operand", tokens.get(-1).getIndex() + operator.length());
