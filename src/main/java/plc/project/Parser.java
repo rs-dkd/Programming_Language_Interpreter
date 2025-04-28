@@ -262,21 +262,30 @@ public final class Parser {
             match(";");
         }
         Ast.Expression condition = parseExpression();
-        match(";");
+        if(!match(";")){
+            throw new ParseException("Expected ;", tokens.has(0) ? tokens.get(0).getIndex() : tokens.get(-1).getIndex() + 1);
+        }
         Ast.Statement.Assignment inc = null;
         if(peek(Token.Type.IDENTIFIER)){
-            Ast.Expression.Access target = new Ast.Expression.Access(Optional.empty(), tokens.get(0).getLiteral());
+            String name = tokens.get(0).getLiteral();
             match(Token.Type.IDENTIFIER);
-            if(match("=")){
+            Ast.Expression.Access target = new Ast.Expression.Access(Optional.empty(), name);
+            if (match("=")) {
                 Ast.Expression value = parseExpression();
                 inc = new Ast.Statement.Assignment(target, value);
             }
         }
-        match(")");
+        if(!match(")")){
+            throw new ParseException("Missing closing parenthesis", tokens.has(0) ? tokens.get(0).getIndex() : tokens.get(-1).getIndex() + 1);
+        }
+        if(!match("DO")){
+            throw new ParseException("Expected DO after for condition", tokens.has(0) ? tokens.get(0).getIndex() : tokens.get(-1).getIndex() + 1);
+        }
         List<Ast.Statement> body = new ArrayList<>();
         while(!peek("END")){
             body.add(parseStatement());
         }
+
         match("END");
         return new Ast.Statement.For(init, condition, inc, body);
     }

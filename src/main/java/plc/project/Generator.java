@@ -15,8 +15,10 @@ public final class Generator implements Ast.Visitor<Void> {
         for (Object object : objects) {
             if (object instanceof Ast) {
                 visit((Ast) object);
-            } else {
+            }else if(object != null){
                 writer.write(object.toString());
+            }else{
+                writer.write("null");
             }
         }
     }
@@ -31,31 +33,38 @@ public final class Generator implements Ast.Visitor<Void> {
     @Override
     public Void visit(Ast.Source ast) {
         print("public class Main {");
+        newline(0);
         indent++;
         if(!ast.getFields().isEmpty()){
-            newline(0);
             for(Ast.Field field : ast.getFields()){
-                newline(1);
+                newline(indent);
                 visit(field);
             }
         }
-        for(Ast.Method method : ast.getMethods()){
-            if(method.getName().equals("main")) continue;
-            newline(0);
-            newline(1);
-            visit(method);
+        if(!ast.getMethods().isEmpty()){
+            boolean hasNonMainMethods = ast.getMethods().stream().anyMatch(method -> !method.getName().equals("main"));
+            if(hasNonMainMethods && !ast.getFields().isEmpty()){
+                newline(0);
+            }
+
+            for(Ast.Method method : ast.getMethods()){
+                if(method.getName().equals("main")) continue;
+                newline(indent);
+                visit(method);
+                newline(0);
+            }
         }
-        newline(0);
-        newline(1);
+        newline(indent);
         print("public static void main(String[] args) {");
-        newline(2);
+        newline(indent + 1);
         print("System.exit(new Main().main());");
-        newline(1);
+        newline(indent);
         print("}");
+
         for(Ast.Method method : ast.getMethods()){
             if (!method.getName().equals("main")) continue;
             newline(0);
-            newline(1);
+            newline(indent);
             visit(method);
         }
         newline(0);
@@ -92,6 +101,10 @@ public final class Generator implements Ast.Visitor<Void> {
             }
             indent--;
             newline(indent);
+        }else{
+            indent--;
+            print("}");
+            return null;
         }
         print("}");
         return null;
@@ -128,19 +141,25 @@ public final class Generator implements Ast.Visitor<Void> {
         print("if (");
         visit(ast.getCondition());
         print(") {");
-        for(Ast.Statement statement : ast.getThenStatements()){
-            newline(1);
-            visit(statement);
+        if(!ast.getThenStatements().isEmpty()){
+            indent++;
+            for(Ast.Statement statement : ast.getThenStatements()){
+                newline(indent);
+                visit(statement);
+            }
+            indent--;
+            newline(indent);
         }
-        newline(0);
         print("}");
         if(!ast.getElseStatements().isEmpty()){
             print(" else {");
+            indent++;
             for(Ast.Statement statement : ast.getElseStatements()){
-                newline(1);
+                newline(indent);
                 visit(statement);
             }
-            newline(0);
+            indent--;
+            newline(indent);
             print("}");
         }
         return null;
@@ -181,24 +200,32 @@ public final class Generator implements Ast.Visitor<Void> {
             }
         }
         print(" ) {");
-        for(Ast.Statement statement : ast.getStatements()){
-            newline(1);
-            visit(statement);
+        if(!ast.getStatements().isEmpty()){
+            indent++;
+            for(Ast.Statement statement : ast.getStatements()){
+                newline(indent);
+                visit(statement);
+            }
+            indent--;
+            newline(indent);
         }
-        newline(0);
         print("}");
         return null;
     }
 
     @Override
     public Void visit(Ast.Statement.While ast) {
-        print("while (", ast.getCondition(), ") {");
+        print("while (");
+        visit(ast.getCondition());
+        print(") {");
         if(!ast.getStatements().isEmpty()){
+            indent++;
             for(Ast.Statement statement : ast.getStatements()){
-                newline(1);
+                newline(indent);
                 visit(statement);
             }
-            newline(0);
+            indent--;
+            newline(indent);
         }
         print("}");
         return null;
@@ -212,8 +239,12 @@ public final class Generator implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Expression.Literal ast) {
-        if(ast.getLiteral() instanceof String){
+        if(ast.getLiteral() == null){
+            print("null");
+        }else if(ast.getLiteral() instanceof String){
             print("\"", ast.getLiteral().toString().replace("\n", "\\n"), "\"");
+        } else if(ast.getLiteral() instanceof Character){
+            print("'", ast.getLiteral().toString(), "'");
         }else{
             print(ast.getLiteral());
         }
@@ -228,7 +259,17 @@ public final class Generator implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Expression.Binary ast) {
-        print(ast.getLeft(), " ", ast.getOperator(), " ", ast.getRight());
+        if(ast.getOperator().equals("*") && ast.getLeft() instanceof Ast.Expression.Binary && ((Ast.Expression.Binary)ast.getLeft()).getOperator().equals("/")){
+            print("(");
+            visit(ast.getLeft());
+            print(")");
+            print(" ", ast.getOperator(), " ");
+            visit(ast.getRight());
+        }else{
+            visit(ast.getLeft());
+            print(" ", ast.getOperator(), " ");
+            visit(ast.getRight());
+        }
         return null;
     }
 

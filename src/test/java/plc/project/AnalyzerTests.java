@@ -50,6 +50,84 @@ public final class AnalyzerTests {
                         ),
                         null
                 ),
+                Arguments.of("Valid Main",
+                        new Ast.Source(
+                                Arrays.asList(),
+                                Arrays.asList(
+                                        new Ast.Method("main", Arrays.asList(), Arrays.asList(), Optional.of("Integer"), Arrays.asList())
+                                )
+                        ),
+                        new Ast.Source(
+                                Arrays.asList(),
+                                Arrays.asList(
+                                        init(new Ast.Method("main", Arrays.asList(), Arrays.asList(), Optional.of("Integer"), Arrays.asList()),
+                                                ast -> ast.setFunction(new Environment.Function("main", "main", Arrays.asList(), Environment.Type.INTEGER, args -> Environment.NIL)))
+                                )
+                        )
+                ),
+                Arguments.of("Field Use",
+                        new Ast.Source(
+                                Arrays.asList(
+                                        new Ast.Field("num", "Integer", false, Optional.of(new Ast.Expression.Literal(BigInteger.ONE)))
+                                ),
+                                Arrays.asList(
+                                        new Ast.Method("main", Arrays.asList(), Arrays.asList(), Optional.of("Integer"), Arrays.asList(
+                                                new Ast.Statement.Expression(new Ast.Expression.Function(Optional.empty(), "print", Arrays.asList(
+                                                        new Ast.Expression.Access(Optional.empty(), "num")
+                                                )))
+                                        ))
+                                )
+                        ),
+                        init(new Ast.Source(
+                                Arrays.asList(
+                                        init(new Ast.Field("num", "Integer", false, Optional.of(
+                                                init(new Ast.Expression.Literal(BigInteger.ONE), ast -> ast.setType(Environment.Type.INTEGER))
+                                        )), ast -> ast.setVariable(new Environment.Variable("num", "num", Environment.Type.INTEGER, false, Environment.NIL)))
+                                ),
+                                Arrays.asList(
+                                        init(new Ast.Method("main", Arrays.asList(), Arrays.asList(), Optional.of("Integer"), Arrays.asList(
+                                                new Ast.Statement.Expression(init(new Ast.Expression.Function(Optional.empty(), "print", Arrays.asList(
+                                                        init(new Ast.Expression.Access(Optional.empty(), "num"), ast -> ast.setVariable(new Environment.Variable("num", "num", Environment.Type.INTEGER, false, Environment.NIL)))
+                                                )), ast -> ast.setFunction(new Environment.Function("print", "System.out.println", Arrays.asList(Environment.Type.ANY), Environment.Type.NIL, args -> Environment.NIL))))
+                                        )), ast -> ast.setFunction(new Environment.Function("main", "main", Arrays.asList(), Environment.Type.INTEGER, args -> Environment.NIL)))
+                                )
+                        ), source -> {})
+                ),
+                Arguments.of("Method Use Simplified",
+                        new Ast.Source(
+                                Arrays.asList(),
+                                Arrays.asList(
+                                        new Ast.Method("reverse", Arrays.asList("s"), Arrays.asList("String"), Optional.of("String"), Arrays.asList(
+                                                new Ast.Statement.Return(new Ast.Expression.Access(Optional.empty(), "s"))
+                                        )),
+                                        new Ast.Method("main", Arrays.asList(), Arrays.asList(), Optional.of("Integer"), Arrays.asList(
+                                                new Ast.Statement.Expression(new Ast.Expression.Function(Optional.empty(), "print", Arrays.asList(
+                                                        new Ast.Expression.Function(Optional.empty(), "reverse", Arrays.asList(
+                                                                new Ast.Expression.Literal("Hello World")
+                                                        ))
+                                                ))),
+                                                new Ast.Statement.Return(new Ast.Expression.Literal(BigInteger.ZERO))
+                                        ))
+                                )
+                        ),
+                        init(new Ast.Source(
+                                Arrays.asList(),
+                                Arrays.asList(
+                                        init(new Ast.Method("reverse", Arrays.asList("s"), Arrays.asList("String"), Optional.of("String"), Arrays.asList(
+                                                new Ast.Statement.Return(init(new Ast.Expression.Access(Optional.empty(), "s"),
+                                                        ast -> ast.setVariable(new Environment.Variable("s", "s", Environment.Type.STRING, false, Environment.NIL))))
+                                        )), ast -> ast.setFunction(new Environment.Function("reverse", "reverse", Arrays.asList(Environment.Type.STRING), Environment.Type.STRING, args -> Environment.NIL))),
+                                        init(new Ast.Method("main", Arrays.asList(), Arrays.asList(), Optional.of("Integer"), Arrays.asList(
+                                                new Ast.Statement.Expression(init(new Ast.Expression.Function(Optional.empty(), "print", Arrays.asList(
+                                                        init(new Ast.Expression.Function(Optional.empty(), "reverse", Arrays.asList(
+                                                                init(new Ast.Expression.Literal("Hello World"), ast -> ast.setType(Environment.Type.STRING))
+                                                        )), ast -> ast.setFunction(new Environment.Function("reverse", "reverse", Arrays.asList(Environment.Type.STRING), Environment.Type.STRING, args -> Environment.NIL)))
+                                                )), ast -> ast.setFunction(new Environment.Function("print", "System.out.println", Arrays.asList(Environment.Type.ANY), Environment.Type.NIL, args -> Environment.NIL)))),
+                                                new Ast.Statement.Return(init(new Ast.Expression.Literal(BigInteger.ZERO), ast -> ast.setType(Environment.Type.INTEGER)))
+                                        )), ast -> ast.setFunction(new Environment.Function("main", "main", Arrays.asList(), Environment.Type.INTEGER, args -> Environment.NIL)))
+                                )
+                        ), source -> {})
+                ),
                 // DEF main() DO RETURN 0; END
                 Arguments.of("Missing Integer Return Type for Main",
                         new Ast.Source(
@@ -169,6 +247,52 @@ public final class AnalyzerTests {
                                 ))
                         )),
                         null
+                ),
+                Arguments.of("Valid Parameter Use",
+                        new Ast.Method("func", Arrays.asList("x"), Arrays.asList("Integer"), Optional.empty(), Arrays.asList(
+                                new Ast.Statement.Expression(new Ast.Expression.Function(Optional.empty(), "print", Arrays.asList(
+                                        new Ast.Expression.Binary("+",
+                                                new Ast.Expression.Access(Optional.empty(), "x"),
+                                                new Ast.Expression.Literal(BigInteger.ONE)
+                                        )
+                                )))
+                        )),
+                        init(new Ast.Method("func", Arrays.asList("x"), Arrays.asList("Integer"), Optional.empty(), Arrays.asList(
+                                new Ast.Statement.Expression(init(new Ast.Expression.Function(Optional.empty(), "print", Arrays.asList(
+                                        init(new Ast.Expression.Binary("+",
+                                                init(new Ast.Expression.Access(Optional.empty(), "x"),
+                                                        ast -> ast.setVariable(new Environment.Variable("x", "x", Environment.Type.INTEGER, false, Environment.NIL))),
+                                                init(new Ast.Expression.Literal(BigInteger.ONE), ast -> ast.setType(Environment.Type.INTEGER))
+                                        ), ast -> ast.setType(Environment.Type.INTEGER))
+                                )), ast -> ast.setFunction(new Environment.Function("print", "System.out.println", Arrays.asList(Environment.Type.ANY), Environment.Type.NIL, args -> Environment.NIL))))
+                        )), ast -> ast.setFunction(new Environment.Function("func", "func", Arrays.asList(Environment.Type.INTEGER), Environment.Type.NIL, args -> Environment.NIL)))
+                ),
+                Arguments.of("Multi Parameter Use",
+                        new Ast.Method("func", Arrays.asList("x", "y", "z"), Arrays.asList("Integer", "Integer", "Integer"), Optional.empty(), Arrays.asList(
+                                new Ast.Statement.Expression(new Ast.Expression.Function(Optional.empty(), "print", Arrays.asList(
+                                        new Ast.Expression.Binary("+",
+                                                new Ast.Expression.Binary("+",
+                                                        new Ast.Expression.Access(Optional.empty(), "x"),
+                                                        new Ast.Expression.Access(Optional.empty(), "y")
+                                                ),
+                                                new Ast.Expression.Access(Optional.empty(), "z")
+                                        )
+                                )))
+                        )),
+                        init(new Ast.Method("func", Arrays.asList("x", "y", "z"), Arrays.asList("Integer", "Integer", "Integer"), Optional.empty(), Arrays.asList(
+                                new Ast.Statement.Expression(init(new Ast.Expression.Function(Optional.empty(), "print", Arrays.asList(
+                                        init(new Ast.Expression.Binary("+",
+                                                init(new Ast.Expression.Binary("+",
+                                                        init(new Ast.Expression.Access(Optional.empty(), "x"),
+                                                                ast -> ast.setVariable(new Environment.Variable("x", "x", Environment.Type.INTEGER, false, Environment.NIL))),
+                                                        init(new Ast.Expression.Access(Optional.empty(), "y"),
+                                                                ast -> ast.setVariable(new Environment.Variable("y", "y", Environment.Type.INTEGER, false, Environment.NIL)))
+                                                ), ast -> ast.setType(Environment.Type.INTEGER)),
+                                                init(new Ast.Expression.Access(Optional.empty(), "z"),
+                                                        ast -> ast.setVariable(new Environment.Variable("z", "z", Environment.Type.INTEGER, false, Environment.NIL)))
+                                        ), ast -> ast.setType(Environment.Type.INTEGER))
+                                )), ast -> ast.setFunction(new Environment.Function("print", "System.out.println", Arrays.asList(Environment.Type.ANY), Environment.Type.NIL, args -> Environment.NIL))))
+                        )), ast -> ast.setFunction(new Environment.Function("func", "func", Arrays.asList(Environment.Type.INTEGER, Environment.Type.INTEGER, Environment.Type.INTEGER), Environment.Type.NIL, args -> Environment.NIL)))
                 )
         );
     }

@@ -197,37 +197,192 @@ final class ParserModifiedTests {
         );
     }
 
-    /*
     @ParameterizedTest
     @MethodSource
     void testForStatement(String test, List<Token> tokens, Ast.Statement.For expected) {
         test(tokens, expected, Parser::parseStatement);
     }
 
-
     private static Stream<Arguments> testForStatement() {
         return Stream.of(
-                Arguments.of("For",
+                Arguments.of("Basic For",
                         Arrays.asList(
-                                //FOR elem IN list DO stmt; END
+                                //FOR (LET id = expr1; expr2; id = expr3) DO stmt; END
                                 new Token(Token.Type.IDENTIFIER, "FOR", 0),
-                                new Token(Token.Type.IDENTIFIER, "elem", 6),
-                                new Token(Token.Type.IDENTIFIER, "IN", 9),
-                                new Token(Token.Type.IDENTIFIER, "list", 12),
-                                new Token(Token.Type.IDENTIFIER, "DO", 17),
-                                new Token(Token.Type.IDENTIFIER, "stmt", 20),
-                                new Token(Token.Type.OPERATOR, ";", 24),
-                                new Token(Token.Type.IDENTIFIER, "END", 26)
+                                new Token(Token.Type.OPERATOR, "(", 3),
+                                new Token(Token.Type.IDENTIFIER, "LET", 4),
+                                new Token(Token.Type.IDENTIFIER, "id", 8),
+                                new Token(Token.Type.OPERATOR, "=", 11),
+                                new Token(Token.Type.IDENTIFIER, "expr1", 13),
+                                new Token(Token.Type.OPERATOR, ";", 18),
+                                new Token(Token.Type.IDENTIFIER, "expr2", 20),
+                                new Token(Token.Type.OPERATOR, ";", 25),
+                                new Token(Token.Type.IDENTIFIER, "id", 27),
+                                new Token(Token.Type.OPERATOR, "=", 30),
+                                new Token(Token.Type.IDENTIFIER, "expr3", 32),
+                                new Token(Token.Type.OPERATOR, ")", 37),
+                                new Token(Token.Type.IDENTIFIER, "DO", 39),
+                                new Token(Token.Type.IDENTIFIER, "stmt", 42),
+                                new Token(Token.Type.OPERATOR, ";", 46),
+                                new Token(Token.Type.IDENTIFIER, "END", 48)
                         ),
                         new Ast.Statement.For(
-                                "elem",
-                                new Ast.Expression.Access(Optional.empty(), "list"),
-                                Arrays.asList(new Ast.Statement.Expression(new Ast.Expression.Access(Optional.empty(), "stmt")))
+                                new Ast.Statement.Declaration("id", java.util.Optional.empty(), java.util.Optional.of(new Ast.Expression.Access(java.util.Optional.empty(), "expr1"))),
+                                new Ast.Expression.Access(java.util.Optional.empty(), "expr2"),
+                                new Ast.Statement.Assignment(
+                                        new Ast.Expression.Access(java.util.Optional.empty(), "id"),
+                                        new Ast.Expression.Access(java.util.Optional.empty(), "expr3")
+                                ),
+                                Arrays.asList(new Ast.Statement.Expression(new Ast.Expression.Access(java.util.Optional.empty(), "stmt")))
+                        )
+                ),
+                Arguments.of("Multiple Statements",
+                        Arrays.asList(
+                                //FOR (LET id = expr1; expr2; id = expr3) DO stmt1; stmt2; stmt3; END
+                                new Token(Token.Type.IDENTIFIER, "FOR", 0),
+                                new Token(Token.Type.OPERATOR, "(", 3),
+                                new Token(Token.Type.IDENTIFIER, "LET", 4),
+                                new Token(Token.Type.IDENTIFIER, "id", 8),
+                                new Token(Token.Type.OPERATOR, "=", 11),
+                                new Token(Token.Type.IDENTIFIER, "expr1", 13),
+                                new Token(Token.Type.OPERATOR, ";", 18),
+                                new Token(Token.Type.IDENTIFIER, "expr2", 20),
+                                new Token(Token.Type.OPERATOR, ";", 25),
+                                new Token(Token.Type.IDENTIFIER, "id", 27),
+                                new Token(Token.Type.OPERATOR, "=", 30),
+                                new Token(Token.Type.IDENTIFIER, "expr3", 32),
+                                new Token(Token.Type.OPERATOR, ")", 37),
+                                new Token(Token.Type.IDENTIFIER, "DO", 39),
+                                new Token(Token.Type.IDENTIFIER, "stmt1", 42),
+                                new Token(Token.Type.OPERATOR, ";", 47),
+                                new Token(Token.Type.IDENTIFIER, "stmt2", 49),
+                                new Token(Token.Type.OPERATOR, ";", 54),
+                                new Token(Token.Type.IDENTIFIER, "stmt3", 56),
+                                new Token(Token.Type.OPERATOR, ";", 61),
+                                new Token(Token.Type.IDENTIFIER, "END", 63)
+                        ),
+                        new Ast.Statement.For(
+                                new Ast.Statement.Declaration("id", java.util.Optional.empty(), java.util.Optional.of(new Ast.Expression.Access(java.util.Optional.empty(), "expr1"))),
+                                new Ast.Expression.Access(java.util.Optional.empty(), "expr2"),
+                                new Ast.Statement.Assignment(
+                                        new Ast.Expression.Access(java.util.Optional.empty(), "id"),
+                                        new Ast.Expression.Access(java.util.Optional.empty(), "expr3")
+                                ),
+                                Arrays.asList(
+                                        new Ast.Statement.Expression(new Ast.Expression.Access(java.util.Optional.empty(), "stmt1")),
+                                        new Ast.Statement.Expression(new Ast.Expression.Access(java.util.Optional.empty(), "stmt2")),
+                                        new Ast.Statement.Expression(new Ast.Expression.Access(java.util.Optional.empty(), "stmt3"))
+                                )
+                        )
+                ),
+                Arguments.of("Empty Initialization",
+                        Arrays.asList(
+                                //FOR (; expr2; id = expr3) DO stmt; END
+                                new Token(Token.Type.IDENTIFIER, "FOR", 0),
+                                new Token(Token.Type.OPERATOR, "(", 3),
+                                new Token(Token.Type.OPERATOR, ";", 4),
+                                new Token(Token.Type.IDENTIFIER, "expr2", 6),
+                                new Token(Token.Type.OPERATOR, ";", 11),
+                                new Token(Token.Type.IDENTIFIER, "id", 13),
+                                new Token(Token.Type.OPERATOR, "=", 16),
+                                new Token(Token.Type.IDENTIFIER, "expr3", 18),
+                                new Token(Token.Type.OPERATOR, ")", 23),
+                                new Token(Token.Type.IDENTIFIER, "DO", 25),
+                                new Token(Token.Type.IDENTIFIER, "stmt", 28),
+                                new Token(Token.Type.OPERATOR, ";", 32),
+                                new Token(Token.Type.IDENTIFIER, "END", 34)
+                        ),
+                        new Ast.Statement.For(
+                                null,
+                                new Ast.Expression.Access(java.util.Optional.empty(), "expr2"),
+                                new Ast.Statement.Assignment(
+                                        new Ast.Expression.Access(java.util.Optional.empty(), "id"),
+                                        new Ast.Expression.Access(java.util.Optional.empty(), "expr3")
+                                ),
+                                Arrays.asList(new Ast.Statement.Expression(new Ast.Expression.Access(java.util.Optional.empty(), "stmt")))
+                        )
+                ),
+                Arguments.of("Empty Increment",
+                        Arrays.asList(
+                                //FOR (LET id = expr1; expr2; ) DO stmt; END
+                                new Token(Token.Type.IDENTIFIER, "FOR", 0),
+                                new Token(Token.Type.OPERATOR, "(", 3),
+                                new Token(Token.Type.IDENTIFIER, "LET", 4),
+                                new Token(Token.Type.IDENTIFIER, "id", 8),
+                                new Token(Token.Type.OPERATOR, "=", 11),
+                                new Token(Token.Type.IDENTIFIER, "expr1", 13),
+                                new Token(Token.Type.OPERATOR, ";", 18),
+                                new Token(Token.Type.IDENTIFIER, "expr2", 20),
+                                new Token(Token.Type.OPERATOR, ";", 25),
+                                new Token(Token.Type.OPERATOR, ")", 27),
+                                new Token(Token.Type.IDENTIFIER, "DO", 29),
+                                new Token(Token.Type.IDENTIFIER, "stmt", 32),
+                                new Token(Token.Type.OPERATOR, ";", 36),
+                                new Token(Token.Type.IDENTIFIER, "END", 38)
+                        ),
+                        new Ast.Statement.For(
+                                new Ast.Statement.Declaration("id", java.util.Optional.empty(), java.util.Optional.of(new Ast.Expression.Access(java.util.Optional.empty(), "expr1"))),
+                                new Ast.Expression.Access(java.util.Optional.empty(), "expr2"),
+                                null,
+                                Arrays.asList(new Ast.Statement.Expression(new Ast.Expression.Access(java.util.Optional.empty(), "stmt")))
                         )
                 )
         );
     }
-     */
+
+    @Test
+    void testMissingClosingParenthesis() {
+        List<Token> tokens = Arrays.asList(
+                //FOR (LET id = expr1; expr2; id = expr3 DO stmt; END
+                new Token(Token.Type.IDENTIFIER, "FOR", 0),
+                new Token(Token.Type.OPERATOR, "(", 3),
+                new Token(Token.Type.IDENTIFIER, "LET", 4),
+                new Token(Token.Type.IDENTIFIER, "id", 8),
+                new Token(Token.Type.OPERATOR, "=", 11),
+                new Token(Token.Type.IDENTIFIER, "expr1", 13),
+                new Token(Token.Type.OPERATOR, ";", 18),
+                new Token(Token.Type.IDENTIFIER, "expr2", 20),
+                new Token(Token.Type.OPERATOR, ";", 25),
+                new Token(Token.Type.IDENTIFIER, "id", 27),
+                new Token(Token.Type.OPERATOR, "=", 30),
+                new Token(Token.Type.IDENTIFIER, "expr3", 32),
+                new Token(Token.Type.IDENTIFIER, "DO", 38),
+                new Token(Token.Type.IDENTIFIER, "stmt", 41),
+                new Token(Token.Type.OPERATOR, ";", 45),
+                new Token(Token.Type.IDENTIFIER, "END", 47)
+        );
+
+        Parser parser = new Parser(tokens);
+        ParseException exception = Assertions.assertThrows(ParseException.class, parser::parseStatement);
+        Assertions.assertEquals(38, exception.getIndex());
+    }
+
+    @Test
+    void testMissingDo() {
+        List<Token> tokens = Arrays.asList(
+                //FOR (LET id = expr1; expr2; id = expr3) stmt; END
+                new Token(Token.Type.IDENTIFIER, "FOR", 0),
+                new Token(Token.Type.OPERATOR, "(", 3),
+                new Token(Token.Type.IDENTIFIER, "LET", 4),
+                new Token(Token.Type.IDENTIFIER, "id", 8),
+                new Token(Token.Type.OPERATOR, "=", 11),
+                new Token(Token.Type.IDENTIFIER, "expr1", 13),
+                new Token(Token.Type.OPERATOR, ";", 18),
+                new Token(Token.Type.IDENTIFIER, "expr2", 20),
+                new Token(Token.Type.OPERATOR, ";", 25),
+                new Token(Token.Type.IDENTIFIER, "id", 27),
+                new Token(Token.Type.OPERATOR, "=", 30),
+                new Token(Token.Type.IDENTIFIER, "expr3", 32),
+                new Token(Token.Type.OPERATOR, ")", 37),
+                new Token(Token.Type.IDENTIFIER, "stmt", 39),
+                new Token(Token.Type.OPERATOR, ";", 43),
+                new Token(Token.Type.IDENTIFIER, "END", 45)
+        );
+
+        Parser parser = new Parser(tokens);
+        ParseException exception = Assertions.assertThrows(ParseException.class, parser::parseStatement);
+        Assertions.assertEquals(39, exception.getIndex());
+    }
 
     @ParameterizedTest
     @MethodSource

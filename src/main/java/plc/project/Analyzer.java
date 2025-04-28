@@ -38,7 +38,11 @@ public final class Analyzer implements Ast.Visitor<Void> {
                 if (!method.getParameters().isEmpty()) {
                     throw new RuntimeException("The main method should not have any parameters.");
                 }
-                if (method.getReturnTypeName().isEmpty() || !method.getReturnTypeName().get().equals("integer")) {
+                if(method.getReturnTypeName().isEmpty()){
+                    throw new RuntimeException("The main method should return an integer.");
+                }
+                String returnType = method.getReturnTypeName().get().toLowerCase();
+                if(!returnType.equals("integer")){
                     throw new RuntimeException("The main method should return an integer.");
                 }
             }
@@ -64,14 +68,31 @@ public final class Analyzer implements Ast.Visitor<Void> {
     @Override
     public Void visit(Ast.Method ast) {
         List<Environment.Type> paramTypes = ast.getParameters().stream()
-                .map(Environment::getType)
+                .map(param ->{
+                    try{
+                        int index = ast.getParameters().indexOf(param);
+                        if(index < ast.getParameterTypeNames().size()){
+                            return Environment.getType(ast.getParameterTypeNames().get(index));
+                        }
+                        return Environment.Type.ANY;
+                    }catch (Exception e){
+                        return Environment.Type.ANY;
+                    }
+                })
                 .toList();
+        Environment.Type returnType = Environment.Type.NIL;
+        if(ast.getReturnTypeName().isPresent()){
+            try{
+                returnType = Environment.getType(ast.getReturnTypeName().get());
+            }catch(Exception e){
+                throw new RuntimeException("Unknown type " + ast.getReturnTypeName().get() + ".");
+            }
+        }
         this.scope.defineFunction(
                 ast.getName(),
                 ast.getName(),
                 paramTypes,
-                ast.getReturnTypeName().isPresent() ?
-                        Environment.getType(ast.getReturnTypeName().get()) : Environment.Type.NIL,
+                returnType,
                 args -> Environment.NIL
         );
         Environment.Function function = scope.lookupFunction(ast.getName(), paramTypes.size());
@@ -82,8 +103,15 @@ public final class Analyzer implements Ast.Visitor<Void> {
         Scope methodScope = new Scope(this.scope);
 
         for (int i = 0; i < this.method.getParameters().size(); i++) {
-            /* Not sure if Environment.NIL was correct here? */
-            methodScope.defineVariable(this.method.getParameters().get(i), false, Environment.NIL);
+            String paramName = this.method.getParameters().get(i);
+            Environment.Type paramType = i < paramTypes.size() ? paramTypes.get(i) : Environment.Type.ANY;
+            methodScope.defineVariable(
+                    paramName,
+                    paramName,
+                    paramType,
+                    false,
+                    Environment.NIL
+            );
         }
 
         Scope prev = this.scope;
@@ -108,8 +136,14 @@ public final class Analyzer implements Ast.Visitor<Void> {
         if (ast.getValue().isPresent()) visit(ast.getValue().get());
 
         Environment.Type type;
-        if (ast.getTypeName().isPresent()) type = Environment.getType(ast.getTypeName().get());
-        else if (ast.getValue().isPresent()) type = ast.getValue().get().getType();
+        if(ast.getTypeName().isPresent()){
+            try{
+                type = Environment.getType(ast.getTypeName().get());
+            }catch (Exception e){
+                throw new RuntimeException("Unknown type " + ast.getTypeName().get() + ".");
+            }
+        }
+        else if(ast.getValue().isPresent()) type = ast.getValue().get().getType();
         else throw new RuntimeException("The variable's type is not present.");
 
         if (ast.getTypeName().isPresent() && ast.getValue().isPresent())

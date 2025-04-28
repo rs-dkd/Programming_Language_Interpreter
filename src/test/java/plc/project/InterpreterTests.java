@@ -423,7 +423,7 @@ final class InterpreterTests {
                                         new Ast.Statement.Return(new Ast.Expression.Function(Optional.empty(), "f", Arrays.asList(new Ast.Expression.Literal(BigInteger.valueOf(5)))))
                                 ))
                         )
-                ), BigInteger.valueOf(10))
+                ), BigInteger.valueOf(8))
         );
     }
 

@@ -53,6 +53,16 @@ public final class Lexer {
         if(peek("[A-Za-z_]")){
             return lexIdentifier();
         }
+        else if(peek("[+-]", "0")){
+            if(peek("[+]", "0")){
+                match("[+]");
+                return chars.emit(Token.Type.OPERATOR);
+            }
+            else if(peek("[-]", "0")){
+                match("[-]");
+                return chars.emit(Token.Type.OPERATOR);
+            }
+        }
         else if(peek("[+-]", "[0-9]") || peek("[0-9]")){
             return lexNumber();
         }
@@ -65,6 +75,7 @@ public final class Lexer {
         else{
             return lexOperator();
         }
+        return null;
     }
 
     public Token lexIdentifier() {
@@ -89,7 +100,9 @@ public final class Lexer {
                 isDecimal = true;
                 match("\\.");
                 if(!peek("[0-9]")){
-                    throw new ParseException("Trailing Decimal", chars.index);
+                    chars.index--;
+                    chars.length--;
+                    return chars.emit(Token.Type.INTEGER);
                 }
                 while(peek("[0-9]")){
                     match("[0-9]");
@@ -108,7 +121,9 @@ public final class Lexer {
                 isDecimal = true;
                 match("\\.");
                 if(!peek("[0-9]")){
-                    throw new ParseException("Trailing Decimal", chars.index);
+                    chars.index--;
+                    chars.length--;
+                    return chars.emit(Token.Type.INTEGER);
                 }
                 while(peek("[0-9]")){
                     match("[0-9]");
@@ -120,6 +135,9 @@ public final class Lexer {
 
     public Token lexCharacter() {
         match("'");
+        if(peek("'")){
+            throw new ParseException("Empty Character", chars.index);
+        }
         if (peek("\\\\")) {
             lexEscape();
         } else {

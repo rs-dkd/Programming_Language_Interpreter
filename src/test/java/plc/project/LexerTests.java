@@ -163,6 +163,41 @@ public class LexerTests {
 
     @ParameterizedTest
     @MethodSource
+    void testMixedTokens(String test, String input, List<Token> expected) {
+        test(input, expected, true);
+    }
+
+    private static Stream<Arguments> testMixedTokens() {
+        return Stream.of(
+                Arguments.of("Double Decimal", "1..0", Arrays.asList(
+                        new Token(Token.Type.INTEGER, "1", 0),
+                        new Token(Token.Type.OPERATOR, ".", 1),
+                        new Token(Token.Type.OPERATOR, ".", 2),
+                        new Token(Token.Type.INTEGER, "0", 3)
+                )),
+                Arguments.of("Number Method", "1.toString()", Arrays.asList(
+                        new Token(Token.Type.INTEGER, "1", 0),
+                        new Token(Token.Type.OPERATOR, ".", 1),
+                        new Token(Token.Type.IDENTIFIER, "toString", 2),
+                        new Token(Token.Type.OPERATOR, "(", 10),
+                        new Token(Token.Type.OPERATOR, ")", 11)
+                )),
+                Arguments.of("Operator Integer", "+0", Arrays.asList(
+                        new Token(Token.Type.OPERATOR, "+", 0),
+                        new Token(Token.Type.INTEGER, "0", 1)
+                ))
+        );
+    }
+
+    @Test
+    void testEmptyCharacter() {
+        ParseException exception = Assertions.assertThrows(ParseException.class,
+                () -> new Lexer("''").lexToken());
+        Assertions.assertEquals(1, exception.getIndex());
+    }
+
+    @ParameterizedTest
+    @MethodSource
     void testExamples(String test, String input, List<Token> expected) {
         test(input, expected, true);
     }

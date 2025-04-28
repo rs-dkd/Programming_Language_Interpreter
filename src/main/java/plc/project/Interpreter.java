@@ -43,9 +43,10 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Method ast) {
+        Scope defScope = scope;
         scope.defineFunction(ast.getName(), ast.getParameters().size(), args -> {
             Scope curr = scope;
-            Scope methodScope = new Scope(curr);
+            Scope methodScope = new Scope(defScope);
             try{
                 for(int i = 0; i < args.size(); i++){
                     methodScope.defineVariable(ast.getParameters().get(i), false, args.get(i));
