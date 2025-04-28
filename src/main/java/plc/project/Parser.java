@@ -243,7 +243,7 @@ public final class Parser {
     public Ast.Statement.For parseForStatement() throws ParseException {
         match("FOR");
         match("(");
-        Ast.Statement.Declaration init = null;
+        Ast.Statement init = null;
         if(peek("LET")){
             init = parseDeclarationStatement();
         }else if (peek(Token.Type.IDENTIFIER)){
@@ -254,7 +254,9 @@ public final class Parser {
                 if(!match(";")){
                     throw new ParseException("Expected ;", tokens.has(0) ? tokens.get(0).getIndex() : tokens.get(-1).getIndex() + 1);
                 }
-                init = new Ast.Statement.Declaration(name, Optional.empty(), Optional.of(value));
+                init = new Ast.Statement.Assignment(
+                    new Ast.Expression.Access(Optional.empty(), name), value
+                );
             }else{
                 match(";");
             }
@@ -278,9 +280,7 @@ public final class Parser {
         if(!match(")")){
             throw new ParseException("Missing closing parenthesis", tokens.has(0) ? tokens.get(0).getIndex() : tokens.get(-1).getIndex() + 1);
         }
-        if(!match("DO")){
-            throw new ParseException("Expected DO after for condition", tokens.has(0) ? tokens.get(0).getIndex() : tokens.get(-1).getIndex() + 1);
-        }
+        match("DO");
         List<Ast.Statement> body = new ArrayList<>();
         while(!peek("END")){
             body.add(parseStatement());
