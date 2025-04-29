@@ -155,13 +155,11 @@ public class GeneratorTests {
                     "        return z;",
                     "    }",
                     "",
-                    "    public static Void main(String[] args) {",
+                    "    public static void main(String[] args) {",
                     "        System.exit(new Main().main());",
                     "    }",
                     "",
-                    "    int main() {",
-                    "        return 0;",
-                    "    }",
+                    "    int main() {}",
                     "",
                     "}"
                 )
